@@ -77,18 +77,39 @@ https://api.openweathermap.org/data/2.5/weather?q=Bangkok&appid=YOUR_API_KEY&uni
 
 > ✅ **Checkpoint 1.1** ถ่ายภาพหน้าจอ Postman ที่แสดง Status Code `200` พร้อม Response Body แบบเต็ม จากนั้นให้เขียนระบุใน ว่า key ใดใน JSON ที่คาดว่าจะต้องใช้แสดงผลในแอป (เช่น ชื่อเมือง, อุณหภูมิ, คำอธิบายสภาพอากาศ)
 
-```text
-บันทึกรูปและคำตอบที่นี่
-```
+ใช้ Postman Web แทนที่ `appid` ด้วยตัวแปร Global `{{apiKey}}` เพื่อไม่ให้ Key จริงปรากฏในภาพหน้าจอ
+
+![Postman 200 OK (ส่วนบน)](images/cp1_1_postman_200_top.jpg)
+
+![Postman 200 OK (ส่วนล่าง มี key name)](images/cp1_1_postman_200_bottom.jpg)
+
+ได้ Status Code `200 OK` key ที่คาดว่าต้องใช้แสดงผลในแอป
+
+| ข้อมูล | key ใน JSON | ค่าที่ได้ | หมายเหตุ |
+|---|---|---|---|
+| ชื่อเมือง | `name` | `กรุงเทพมหานคร` | อยู่ระดับบนสุด (ได้ภาษาไทยเพราะใส่ `lang=th`) |
+| อุณหภูมิ | `main.temp` | `25.18` | ซ้อนอยู่ใน object `main` |
+| อุณหภูมิที่รู้สึกได้ | `main.feels_like` | `26.08` | ซ้อนอยู่ใน object `main` |
+| คำอธิบายสภาพอากาศ | `weather[0].description` | `ฝนปานกลาง` | `weather` เป็น **List** ต้องดึงสมาชิกตัวแรกก่อน |
+
+key อื่นที่อาจใช้ต่อได้ เช่น `main.humidity` (ความชื้น), `wind.speed` (ความเร็วลม) และ `weather[0].icon` (รหัสไอคอน)
 ### ขั้นตอนที่ 1.2 — 🧠 คิดเอง/ออกแบบเอง
 
 ออกแบบการทดสอบกรณีผิดพลาด (error case) อย่างน้อย 1 กรณี โดยเปลี่ยนค่าพารามิเตอร์บางตัวใน Request ให้เป็นสิ่งที่คาดว่าจะทำให้เซิร์ฟเวอร์ตอบกลับด้วย error (ตัวอย่างแนวทางที่เลือกได้ เช่น เปลี่ยนชื่อเมืองเป็นชื่อที่ไม่มีอยู่จริง, ใส่ `appid` ผิด, หรือลบ `appid` ออกไปเลย) **ก่อนกด Send ให้เขียนคาดการณ์ ก่อนว่า นักศึกษาคิดว่า Status Code จะเป็นอะไร** แล้วจึงทดสอบจริงเพื่อเทียบกับที่คาดไว้
 
 > ✅ **Checkpoint 1.2** บันทึกด้านล่างว่านักศึกษาเลือกทดสอบกรณีใด คาดการณ์ Status Code ไว้ว่าอะไร และ Status Code จริงที่ได้คืออะไร (ตรงหรือไม่ตรงกับที่คาดไว้) พร้อมอธิบายว่าผลลัพธ์ที่ได้ตรงกับช่วง Status Code ใดตามตารางในบทเรียนหัวข้อ 6.3
 
-```text
-บันทึกรูปและคำตอบที่นี่
-```
+**กรณีที่เลือกทดสอบ:** เปลี่ยนชื่อเมืองเป็นชื่อที่ไม่มีอยู่จริง `q=Atlantisxyz` (พารามิเตอร์อื่นเหมือนเดิม)
+
+**คาดการณ์ก่อนกด Send:** `404 Not Found` เพราะ URL และ API Key ถูกต้อง แต่ Resource ที่ขอ (เมือง Atlantisxyz) ไม่มีอยู่บนเซิร์ฟเวอร์
+
+**ผลจริง:** `404 Not Found` พร้อม body `{"cod": "404", "message": "city not found"}` — **ตรงกับที่คาดไว้**
+
+![Postman 404 Not Found](images/cp1_2_postman_404.jpg)
+
+ผลนี้อยู่ในช่วง **4xx (Client Error)** ตามตารางหัวข้อ 6.3 คือฝั่ง Client ขอสิ่งที่ผิดเอง (ขอเมืองที่ไม่มีอยู่จริง) ไม่ใช่เซิร์ฟเวอร์มีปัญหา (ซึ่งจะเป็น 5xx) แอปจึงควรบอกผู้ใช้ให้ตรวจสอบการสะกดชื่อเมือง แทนที่จะบอกให้ลองใหม่ภายหลัง
+
+นอกจากนี้ช่วงแรกที่สมัคร Key ใหม่ ยังเจอ `401 Unauthorized` (`Invalid API key`) ซึ่งก็อยู่ในช่วง 4xx เช่นกัน เพราะ Key ยังไม่เปิดใช้งาน (OpenWeather ใช้เวลาเปิดใช้งาน Key ใหม่ประมาณ 10 นาทีถึง 2 ชั่วโมง)
 ---
 
 ## ส่วนที่ 2: สร้าง Model Class และเรียก API ด้วย http Package
@@ -182,8 +203,36 @@ void main() {
 
 > ✅ **Checkpoint 2.1** รันไฟล์ทดสอบข้างต้น สังเกตค่าทั้ง 4 ฟิลด์ที่ `print()` ออกมาใน Debug Console ว่าตรงกับ Response Body จริงจาก Postman หรือไม่ ถ่ายภาพหน้าจอ Debug Console ที่แสดงว่าค่าทั้ง 4 ฟิลด์ถูกต้องตรงกับ JSON จริง
 
-```text
-บันทึกรูปที่นี่
+ใช้ Response Body จริงจาก Postman ในขั้นตอนที่ 1.1 ทั้งก้อนเป็น `rawJson` ใน `lib/test_weather_parse.dart`
+
+![Debug Console ของ test_weather_parse.dart](images/cp2_1_weather_parse.png)
+
+ค่าทั้ง 4 ฟิลด์ตรงกับ JSON จริงจาก Postman: `name` → `กรุงเทพมหานคร`, `main.temp` → `25.18`, `weather[0].description` → `ฝนปานกลาง`, `main.feels_like` → `26.08`
+
+โค้ด `Weather.fromJson` ที่เขียนต่อ
+
+```dart
+  factory Weather.fromJson(Map<String, dynamic> json) {
+    // อุณหภูมิและ feels_like ซ้อนอยู่ใน object ย่อย 'main'
+    final main = json['main'] as Map<String, dynamic>;
+    final temperature = (main['temp'] as num).toDouble();
+    final feelsLike = (main['feels_like'] as num).toDouble();
+
+    // 'weather' เป็น List ต้องดึงสมาชิกตัวแรกออกมาก่อนจึงจะเข้าถึง description ได้
+    final weatherList = json['weather'] as List<dynamic>;
+    final firstWeather = weatherList.first as Map<String, dynamic>;
+    final description = firstWeather['description'] as String;
+
+    // ชื่อเมืองอยู่ที่ระดับบนสุดของ JSON
+    final cityName = json['name'] as String;
+
+    return Weather(
+      cityName: cityName,
+      temperature: temperature,
+      description: description,
+      feelsLike: feelsLike,
+    );
+  }
 ```
 ### ขั้นตอนที่ 2.3 — 🧠 คิดเอง/ออกแบบเอง
 
@@ -232,9 +281,43 @@ class WeatherService {
 
 > ✅ **Checkpoint 2.2** บันทึกผลการตรวจสอบ `statusCode` อย่างน้อย 2 กรณี (สำเร็จ และ 404) ตามเกณฑ์ข้างต้น
 
-```text
-บันทึกรูปและคำตอบที่นี่
+โค้ดที่เขียนต่อใน `lib/services/weather_service.dart` (ส่วนที่เพิ่มจากโครงเริ่มต้น)
+
+```dart
+      if (response.statusCode == 200) {
+        return Weather.fromJson(jsonDecode(response.body));
+      }
+      if (response.statusCode == 404) {
+        throw Exception('ไม่พบเมือง "$city" กรุณาตรวจสอบการสะกดชื่อเมืองอีกครั้ง');
+      }
+      if (response.statusCode == 401) {
+        throw Exception('API Key ไม่ถูกต้องหรือยังไม่เปิดใช้งาน');
+      }
+      throw Exception('เซิร์ฟเวอร์ตอบกลับผิดพลาด (สถานะ ${response.statusCode}) กรุณาลองใหม่ภายหลัง');
+    } on TimeoutException {
+      throw Exception('การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง');
+    } on http.ClientException {
+      throw Exception('ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบการเชื่อมต่อ');
+    } on FormatException {
+      throw Exception('ข้อมูลที่ได้รับจากเซิร์ฟเวอร์ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+    } catch (e) {
+      rethrow;
+    }
 ```
+
+นอกจากนี้ยังใช้ `Uri.encodeQueryComponent(city)` ตอนต่อ URL เพื่อให้พิมพ์ชื่อเมืองที่มีช่องว่างหรือภาษาไทยได้ และเพิ่มกรณี `401` เพราะตอนสมัคร Key ใหม่ ๆ เจอจริงว่า Key ยังไม่เปิดใช้งาน
+
+**ผลการตรวจสอบ statusCode** (log จาก `print` ใน `WeatherService` ตอนทดสอบขั้นตอนที่ 2.4)
+
+```text
+[WeatherService] GET Bangkok -> statusCode 200
+[WeatherService] GET Atlantisxyz -> statusCode 404
+```
+
+| กรณี | statusCode | ผลที่แอปแสดง |
+|---|---|---|
+| ค้นหา `Bangkok` (มีจริง) | `200` | `กรุงเทพมหานคร: 25.18°C` ฝนปานกลาง |
+| ค้นหา `Atlantisxyz` (ไม่มีจริง) | `404` | ไม่พบเมือง "Atlantisxyz" กรุณาตรวจสอบการสะกดชื่อเมืองอีกครั้ง |
 
 ### ขั้นตอนที่ 2.4 — 🧠 คิดเอง/ออกแบบเอง
 
@@ -351,9 +434,39 @@ class MyApp extends StatelessWidget {
 
 > ✅ **Checkpoint 2.3** รันแอปแล้วทดสอบทั้ง 3 สถานการณ์ คือ (1) ค้นหาเมืองที่มีจริง (2) ค้นหาเมืองที่ไม่มีอยู่จริง (3) ปิด Wi-Fi/Data บนเครื่องแล้วลองค้นหา ถ่ายภาพหน้าจอทั้ง 3 กรณี
 
-```text
-บันทึกรูปที่นี่
+โค้ดที่เติมในจุดที่ 1 และ 2
+
+```dart
+    } catch (e) {
+      setState(() {
+        _status = _ViewStatus.error;
+        // ตัดคำว่า "Exception: " ที่ Dart เติมให้อัตโนมัติออก เหลือแค่ข้อความภาษาไทย
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
 ```
+
+```dart
+          if (_status == _ViewStatus.error && _errorMessage != null)
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.red, fontSize: 16),
+            ),
+```
+
+**(1) ค้นหาเมืองที่มีจริง (`Bangkok`)**
+
+![ค้นหา Bangkok สำเร็จ](images/cp2_3_case1_bangkok.jpg)
+
+**(2) ค้นหาเมืองที่ไม่มีอยู่จริง (`Atlantisxyz`)**
+
+![ไม่พบเมือง](images/cp2_3_case2_not_found.jpg)
+
+**(3) ไม่มีอินเทอร์เน็ต**
+
+![ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้](images/cp2_3_case3_no_network.jpg)
+
+> หมายเหตุกรณีที่ 3: ทดสอบแบบ**จำลอง** ไม่ได้ปิด Wi-Fi ของเครื่องจริง โดยรันแอปบน Chrome แล้วทำให้ทุก request ที่ไป `api.openweathermap.org` ล้มเหลวแบบเดียวกับโหมด Offline ของ Chrome (`TypeError: Failed to fetch`) ซึ่งแพ็กเกจ `http` แปลงเป็น `http.ClientException` แอปจึงแสดงข้อความจากกิ่ง `on http.ClientException` ตามที่ออกแบบไว้
 
 ---
 
@@ -402,9 +515,22 @@ ElevatedButton(
 จากนั้นรันแอป กดปุ่มนี้ แล้วดูผลลัพธ์ใน Debug Console (ปุ่มนี้เป็นแค่ปุ่มทดลองชั่วคราว ไม่ต้องมีการจัดการ Loading/Error ใด ๆ ต่างจากปุ่ม "ค้นหา" หลักของหน้า)
 
 > ✅ **Checkpoint 3.1** ถ่ายภาพหน้าจอ Debug Console ที่แสดง Status Code (ควรเป็น `201 Created`) พร้อม Response Body 
+![Debug Console ของ POST และ PUT](images/cp3_post_put_console.png)
+
+**ผลการรัน** (`dart run lib/test_http_methods.dart` ใน `week6_api_lab`)
+
 ```text
-บันทึกรูปและคำตอบที่นี่
+===== ขั้นตอนที่ 3.1: POST =====
+Status Code: 201
+Response Body: {
+  "title": "ทดสอบส่งข้อมูลจาก Flutter",
+  "body": "นี่คือเนื้อหาที่ส่งด้วย HTTP POST",
+  "userId": 1,
+  "id": 101
+}
 ```
+
+ได้ Status Code `201 Created` ตามที่คาดไว้ เซิร์ฟเวอร์ส่งข้อมูลที่เราส่งไปกลับมาพร้อมกำหนด `id: 101` ให้ (JSONPlaceholder มีโพสต์อยู่แล้ว 100 รายการ จึงให้ id ถัดไป แต่ไม่ได้บันทึกจริง)
 
 ### ขั้นตอนที่ 3.2 — 🧠 คิดเอง/ออกแบบเอง
 
@@ -429,9 +555,46 @@ Future<void> updateDemoPost() async {
 
 > ✅ **Checkpoint 3.2** ถ่ายภาพหน้าจอ Debug Console ที่แสดง Status Code ของการเรียก PUT (ควรเป็น `200 OK`) 
 
-```text
-บันทึกรูปและคำตอบที่นี่
+โค้ดที่เขียนเพิ่มใน `lib/services/demo_post_service.dart`
+
+```dart
+Future<void> updateDemoPost() async {
+  final uri = Uri.parse('https://jsonplaceholder.typicode.com/posts/1');
+
+  final response = await http.put(
+    uri,
+    headers: {'Content-Type': 'application/json; charset=UTF-8'},
+    body: jsonEncode({
+      'id': 1,
+      'studentId': '67030011',
+      'studentName': 'Krittanai B.',
+      'title': 'แก้ไขโพสต์ด้วย HTTP PUT',
+      'body': 'อัปเดตข้อมูลทั้งก้อนจาก Flutter (ใบงานสัปดาห์ที่ 6)',
+      'userId': 1,
+    }),
+  );
+
+  print('[PUT] Status Code: ${response.statusCode}');
+  print('[PUT] Response Body: ${response.body}');
+}
 ```
+
+**ผลการรัน**
+
+```text
+===== ขั้นตอนที่ 3.2: PUT =====
+[PUT] Status Code: 200
+[PUT] Response Body: {
+  "id": 1,
+  "studentId": "67030011",
+  "studentName": "Krittanai B.",
+  "title": "แก้ไขโพสต์ด้วย HTTP PUT",
+  "body": "อัปเดตข้อมูลทั้งก้อนจาก Flutter (ใบงานสัปดาห์ที่ 6)",
+  "userId": 1
+}
+```
+
+ได้ Status Code `200 OK` (ไม่ใช่ 201 เพราะ PUT เป็นการแก้ไข Resource ที่มีอยู่แล้ว `/posts/1` ไม่ได้สร้างใหม่) และ Response Body คือข้อมูลทั้งก้อนที่ส่งไปแทนที่ของเดิม
 ---
 
 ## ส่วนที่ 4: ใช้ AI ช่วย Generate โค้ด API Client
@@ -479,14 +642,27 @@ GET https://fakestoreapi.com/products
 
 ไม่ว่าจะเลือกแบบไหน เป้าหมายคือต้องเห็น **ผลลัพธ์จริงจาก Fake Store API** ปรากฏขึ้นมา  ถ้ารันแล้วเจอ error หรือโค้ดจาก Gemini ผิดพลาด (เช่น import ขาด, ชื่อ field ไม่ตรงกับ JSON จริง) ให้จดบันทึกข้อความ error และวิธีแก้ไขไว้ในด้านล่าง
 
-```text
-บันทึก error และการแก้ไขที่นี่
-```
+โค้ดที่ได้จาก Gemini 3.8 Flash ใน Google AI Studio (ส่ง prompt 4.1 และ 4.2 ต่อเนื่องในแชทเดียวกัน) นำไปวางที่ `lib/services/ai_product_service.dart` และทดสอบด้วยไฟล์ `lib/test_ai_product.dart` (แบบที่ 1)
+
+![prompt 4.2 และคำตอบของ Gemini ใน AI Studio](images/cp4_aistudio_prompt2.jpg)
+
+**ปัญหาที่พบและการแก้ไข**
+
+1. **คัดลอกโค้ดจาก AI Studio ได้ไม่ครบ** — กดปุ่ม Copy ที่กล่องโค้ดแล้วได้โค้ดที่ขาดตอนที่บรรทัด `final Uri url = U` ในฟังก์ชัน `fetchAiProductById` ตอนแรกเข้าใจว่า Gemini ตอบไม่จบ จึงถามซ้ำให้ส่งโค้ดเต็มอีกครั้ง แต่สาเหตุจริงคือ AI Studio ยังแสดงโค้ดในกล่องไม่ครบ (โค้ดส่วนท้ายยังไม่ถูกแสดงบนหน้าจอ) ปุ่ม Copy จึงได้แค่ส่วนที่แสดงอยู่ **วิธีแก้:** เลื่อนให้กล่องโค้ดแสดงครบก่อนแล้วค่อยกด Copy จึงได้โค้ดครบ 137 บรรทัด
+2. **รันโค้ดของ Gemini แบบไม่แก้ไขแล้วได้ข้อความ error ที่ผิดสาเหตุ** — ตอนทดสอบ `fakestoreapi.com` ล่มอยู่ (ตอบ `521`) ผลที่ได้คือ
+
+   ```text
+   fetchAiProducts() ผิดพลาด: Exception: เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้งในภายหลัง
+   fetchAiProductById(1) ผิดพลาด: Exception: เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้งในภายหลัง
+   ```
+
+   ทั้งที่ควรได้ "เซิร์ฟเวอร์ขัดข้อง ไม่สามารถโหลดข้อมูลได้ในขณะนี้" สาเหตุคือ Gemini `throw Exception(...)` ไว้**ภายใน** `try` แต่ปิดท้ายด้วย `catch (e)` ที่จับทุกอย่าง ข้อความที่ตั้งใจไว้จึงถูกกลืนแล้วแทนด้วยข้อความกลาง ๆ ส่วน `fetchAiProductById` พยายามเลี่ยงปัญหานี้ด้วย `e.toString().contains('ไม่พบข้อมูลสินค้ารายการนี้')` ซึ่งเปราะบาง (ถ้าแก้ข้อความก็พัง) และยังกลืนข้อความ "เซิร์ฟเวอร์ขัดข้อง" อยู่ดี **วิธีแก้:** เพิ่ม `on Exception { rethrow; }` ก่อน `catch (e)` ทั้งสองฟังก์ชัน ให้ข้อความที่เรา throw เองผ่านออกไปได้ ส่วน `catch (e)` เหลือไว้ดักเฉพาะ Error ที่ไม่คาดคิดจริง ๆ (เช่น `TypeError` จากการ cast)
+3. **Fake Store API ล่ม** — `fakestoreapi.com` ตอบ `521` ต่อเนื่องหลายชั่วโมง (6–7 ต.ค. 2026) **วิธีแก้:** เปลี่ยนไปใช้ `https://dummyjson.com/products` ซึ่งมีฟิลด์ `id`, `title`, `price`, `description`, `category` เหมือนกัน ต่างกันแค่ (ก) ห่อ List ไว้ใน key `products` และ (ข) ใช้ key `thumbnail` แทน `image` จึงแก้ให้ `fetchAiProducts` ดึง List จาก `decodedJson['products']` และ `fromJson` อ่าน `json['image'] ?? json['thumbnail']`
+
+ทุกจุดที่แก้มีคอมเมนต์ `[แก้ไข]` กำกับไว้ในไฟล์ หลังแก้แล้วทดสอบ `fetchAiProductById(99999)` เพิ่ม ได้ข้อความ `ไม่พบข้อมูลสินค้ารายการนี้ในระบบ` ถูกต้อง ไม่ถูกกลืนเป็น "ข้อผิดพลาดที่ไม่คาดคิด" แล้ว
 
 > ✅ **Checkpoint 4.2** ถ่ายภาพหน้าจอ Debug Console ที่แสดงผลลัพธ์จริงจากการเรียก `fetchAiProducts()` (เช่น รายการสินค้าที่ print ออกมา) 
-```text
-บันทึกรูปที่นี่
-```
+![ผลลัพธ์จริงจาก fetchAiProducts()](images/cp4_2_fetch_ai_products.png)
 
 ---
 
@@ -545,9 +721,9 @@ Future<Weather> fetchWeatherWithDio(String city) async {
 2. รูปแบบการเขียน query parameters (`queryParameters: {...}`) ต่างจากการต่อ string URL เองแบบที่ทำใน `WeatherService` (ขั้นตอนที่ 2.3) 
 
 > ✅ **Checkpoint 5.1** ถ่ายภาพหน้าจอ Debug Console ที่แสดงผลลัพธ์จริงจากการเรียก `fetchWeatherWithDio()` (ค่าทั้ง 4 ฟิลด์ของ `Weather` ที่ print ออกมา หรือแสดงผลบนหน้าจอถ้าเลือกแบบที่ 2)
-```text
-บันทึกรูปที่นี่
-```
+ใช้แบบที่ 1: `lib/test_weather_dio.dart` (ส่ง API Key ผ่าน `-D` แทนการเขียนลงโค้ด ในภาพแทนที่ Key จริงด้วย `YOUR_API_KEY`)
+
+![ผลลัพธ์จาก fetchWeatherWithDio()](images/cp5_1_dio_console.png)
 ### ขั้นตอนที่ 5.4 — 🧠 คิดเอง/ออกแบบเอง
 
 `DioException` มีหลายชนิด (`DioExceptionType`) แต่โค้ดในขั้นตอนที่ 5.2 จัดการเฉพาะ `connectionTimeout` ด้านล่างเป็นตัวอย่างการเพิ่มเงื่อนไขให้อีก 1 ชนิด (`badResponse`) ให้ดูเป็นแนวทาง จากนั้นให้เพิ่มเงื่อนไข `else if` อีกอย่างน้อย 1 ชนิดด้วยตัวเอง โดยเลือกจาก `DioExceptionType.receiveTimeout` หรือ `DioExceptionType.connectionError` (ห้ามซ้ำกับ `badResponse` ที่ให้เป็นตัวอย่างแล้ว) พร้อมข้อความแจ้งเตือนภาษาไทยที่เหมาะสมกับสาเหตุนั้นโดยเฉพาะ (ค้นคว้าความหมายของแต่ละชนิดได้จากเอกสารของแพ็กเกจ `dio` บน pub.dev)
@@ -568,15 +744,39 @@ Future<Weather> fetchWeatherWithDio(String city) async {
 
 > ✅ **Checkpoint 5.2** เปรียบเทียบสั้น ๆ ระหว่าง `http` กับ `dio` อย่างน้อย 3 ประเด็น โดยอ้างอิงจากสิ่งที่สังเกตได้จริงตอนทดลองในขั้นตอนที่ 5.3 เช่น การแปลง JSON อัตโนมัติ, การกำหนด Query Parameters, และรูปแบบการจัดการ Exception (`DioException` เทียบกับการดักจับหลายชนิดแยกกันแบบ `http`)
 
-```text
-บันทึกคำตอบที่นี่
-```
+| ประเด็น | `http` (WeatherService ขั้นตอนที่ 2.3) | `dio` (fetchWeatherWithDio ขั้นตอนที่ 5.2) |
+|---|---|---|
+| แปลง JSON | ต้องเรียก `jsonDecode(response.body)` เองทุกครั้ง | `response.data` เป็น `Map` มาให้แล้ว แค่ cast เป็น `Map<String, dynamic>` |
+| Query Parameters | ต่อ string เอง `?q=$city&appid=...` และต้องจำไปเรียก `Uri.encodeQueryComponent(city)` เอง ไม่งั้นชื่อเมืองที่มีช่องว่าง/ภาษาไทยจะพัง | ส่งเป็น `queryParameters: {'q': city, ...}` แล้ว dio encode ให้เอง อ่านง่ายและไม่ลืม encode |
+| Status code ที่ไม่ใช่ 2xx | ไม่โยน exception ต้องเช็ค `response.statusCode` เองทุกครั้ง (ถ้าลืมจะไป parse หน้า error ต่อ) | โยน `DioException` ชนิด `badResponse` ให้อัตโนมัติ |
+| รูปแบบ Exception | ดักแยกหลายชนิด: `TimeoutException`, `http.ClientException`, `FormatException` | ดักชนิดเดียว `DioException` แล้วแยกสาเหตุจาก `e.type` |
+| Timeout | `.timeout()` ครอบทั้ง request ค่าเดียว | แยก `connectTimeout` กับ `receiveTimeout` ได้ จึงบอกผู้ใช้ได้ละเอียดกว่าว่าต่อไม่ติดหรือเซิร์ฟเวอร์ตอบช้า |
+
+สรุป: `dio` เขียนสั้นกว่าและจัดการเรื่องพื้นฐาน (JSON, encode, status code) ให้อัตโนมัติ ส่วน `http` ต้องเขียนเองมากกว่าแต่เห็นทุกขั้นตอนชัดเจน เหมาะกับการเรียนรู้หลักการ
 >
 > ✅ **Checkpoint 5.3** แสดงโค้ดเงื่อนไข `DioExceptionType` เพิ่มเติมที่เขียนเองในขั้นตอนที่ 5.4 
 
-```text
-บันทึกคำตอบที่นี่
+```dart
+} on DioException catch (e) {
+  if (e.type == DioExceptionType.connectionTimeout) {
+    throw Exception('การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง');
+  } else if (e.type == DioExceptionType.badResponse) {
+    // เซิร์ฟเวอร์ตอบกลับมาแล้วแต่ status code ผิดพลาด (เช่น 404, 500)
+    throw Exception('เซิร์ฟเวอร์ตอบกลับผิดพลาด (${e.response?.statusCode})');
+  } else if (e.type == DioExceptionType.receiveTimeout) {
+    // เชื่อมต่อสำเร็จแล้ว แต่เซิร์ฟเวอร์ส่งข้อมูลกลับมาช้าเกินกว่า receiveTimeout ที่ตั้งไว้
+    throw Exception('เซิร์ฟเวอร์ตอบกลับช้าเกินไป กรุณาลองใหม่อีกครั้งในภายหลัง');
+  } else if (e.type == DioExceptionType.connectionError) {
+    // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้เลย เช่น ไม่มีอินเทอร์เน็ต หรือ DNS หาโดเมนไม่เจอ
+    throw Exception('ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบ Wi-Fi หรือสัญญาณมือถือ');
+  }
+
+  throw Exception('เกิดข้อผิดพลาด: ${e.message}');
+}
 ```
+
+- `receiveTimeout` คือเชื่อมต่อเซิร์ฟเวอร์ได้แล้ว แต่รอรับข้อมูลนานเกิน 10 วินาทีที่ตั้งไว้ใน `BaseOptions` ปัญหาจึงอยู่ที่เซิร์ฟเวอร์ช้า ข้อความจึงบอกให้ลองใหม่ภายหลัง
+- `connectionError` คือเปิดการเชื่อมต่อไม่ได้ตั้งแต่ต้น (ไม่มีอินเทอร์เน็ต, DNS ล้มเหลว) ปัญหาจึงอยู่ฝั่งผู้ใช้ ข้อความจึงบอกให้ตรวจสอบ Wi-Fi/สัญญาณมือถือ
 ---
 
 ## ส่วนที่ 7: ต่อยอดเข้าสู่โปรเจกต์ Campus Marketplace
@@ -698,9 +898,43 @@ void main() {
 
 > ✅ **Checkpoint 7.1** ถ่ายภาพ Debug Console ที่ทดสอบ `Item.fromJson()` กับ JSON ตัวอย่างข้างต้นแล้ว print ค่าทั้ง 6 ฟิลด์ออกมาได้ถูกต้อง
 
-```text
-บันทึกรูปที่นี่
+โค้ด `factory Item.fromJson` ที่เขียนต่อ (`campus_marketplace/lib/models/item.dart`)
+
+```dart
+factory Item.fromJson(Map<String, dynamic> json) {
+  final id = json['id'] as int;
+  final title = json['title'] as String;
+  final price = (json['price'] as num).toDouble();
+  final description = json['description'] as String;
+  final category = json['category'] as String;
+  // ชื่อ key ใน JSON คือ 'image' แต่ในคลาสตั้งชื่อฟิลด์ให้สื่อความหมายกว่าว่า imageUrl
+  final imageUrl = json['image'] as String;
+
+  return Item(
+    id: id,
+    title: title,
+    price: price,
+    description: description,
+    category: category,
+    imageUrl: imageUrl,
+  );
+}
 ```
+
+![Debug Console ของ test_item_parse.dart](images/cp7_1_item_parse.png)
+
+**ผลการรัน** `dart run lib/test_item_parse.dart`
+
+```text
+id: 1
+title: Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops
+price: 109.95
+description: Your perfect pack for everyday use...
+category: men's clothing
+imageUrl: https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg
+```
+
+ค่าทั้ง 6 ฟิลด์ตรงกับ JSON ตัวอย่าง รวมถึง `imageUrl` ที่ดึงมาจาก key `image` ได้ถูกต้อง
 ### ขั้นตอนที่ 7.3 — 🔧 ทำตาม (Interface) + 🧠 คิดเอง (Implementation)
 
 ในสัปดาห์ก่อนหน้า มีการเรียนหลักการ **Repository Pattern** ไปแล้วว่า Widget/ViewModel ไม่ควรรู้จักแหล่งข้อมูลโดยตรง (เช่น เรียก `http.get()` เองในไฟล์ UI) แต่ควรรู้จักผ่าน **Interface** เท่านั้น เพื่อให้สลับแหล่งข้อมูลได้โดยไม่ต้องแก้ Widget สัปดาห์นี้ Campus Marketplace มีแหล่งข้อมูลจริงให้ดึง (REST API) ซึ่งจะนำทฤษฎีเรื่อง Repository Pattern มาใช้งานจริง
@@ -835,9 +1069,40 @@ class _HomePageState extends State<HomePage> {
 
 > ✅ **Checkpoint 7.3** รันแอปแล้วถ่ายภาพหน้าจอ Home ที่แสดงรายการสินค้าจริงจาก Fake Store API ผ่าน `ItemRepositoryApi` (ไม่ใช่ข้อมูล mock up) พร้อมภาพโครงสร้างไฟล์ที่แสดงให้เห็นว่ามีทั้ง `item_repository.dart` (Interface) และ `item_repository_api.dart` (Impl) แยกกันชัดเจน และทดสอบว่าปุ่ม "เพิ่มลงตะกร้า" กับการกดไปหน้า `CheckoutPage` จากสัปดาห์ที่ 5 ยังทำงานได้ปกติกับข้อมูล `Item` ชุดใหม่นี้ 
 
-```text
-บันทึกรูปที่นี่
+> ⚠️ **หมายเหตุ:** ช่วงที่ทำใบงาน (6–7 ต.ค. 2026) `fakestoreapi.com` ล่ม ตอบ `521` ต่อเนื่องหลายชั่วโมง แอปจึงแสดงหน้า error ตามที่ออกแบบไว้ (ภาพด้านล่าง) จึงเปลี่ยน `ItemRepositoryApi` ไปใช้ `https://dummyjson.com/products?limit=20` ซึ่งเป็น Public API ฟรีที่ฟิลด์ใกล้เคียงกัน ต่างกันแค่ห่อ List ไว้ใน key `products` และใช้ `thumbnail` แทน `image` — **แก้แค่ `item_repository_api.dart` กับ `Item.fromJson` เท่านั้น ไม่ต้องแตะ `HomePage` หรือ UI ใด ๆ เลย** ซึ่งเป็นข้อดีของ Repository Pattern ที่เห็นได้จริง
+>
+> ![Fake Store API ล่ม](images/cp7_3_api_down_521.png)
+
+โค้ดส่วนที่แก้ใน `item_repository_api.dart`
+
+```dart
+  // fakestoreapi.com ล่ม (ตอบ 521 ต่อเนื่องหลายชั่วโมง ณ 6-7 ต.ค. 2026) จึงใช้ DummyJSON แทน
+  static const _baseUrl = 'https://dummyjson.com/products?limit=20';
+  ...
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final List<dynamic> data = body['products'] as List<dynamic>;
+        return data.map((e) => Item.fromJson(e as Map<String, dynamic>)).toList();
+      }
+  ...
+    } on FormatException {
+      throw Exception('ข้อมูลสินค้าที่ได้รับไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+    }
 ```
+
+**หน้า Home แสดงสินค้าจริงจาก API** — กด "เพิ่มลงตะกร้า" 2 ชิ้นแล้ว ไอคอนตะกร้าขึ้นเลข 2 พร้อม SnackBar ยืนยัน (และกดถูกใจ 1 ชิ้น ไอคอนหัวใจขึ้นเลข 1)
+
+![Home แสดงสินค้าจาก ItemRepositoryApi](images/cp7_3_add_to_cart.jpg)
+
+**หน้า CheckoutPage** แสดงสินค้า 2 ชิ้นที่เพิ่มไว้ พร้อมยอดรวม `$24.98`
+
+![CheckoutPage](images/cp7_3_checkout.jpg)
+
+**โครงสร้างไฟล์** มีทั้ง `item_repository.dart` (Interface) และ `item_repository_api.dart` (Implementation) แยกกัน
+
+![โครงสร้างไฟล์](images/cp7_3_file_structure.png)
+
+นอกจากนี้เขียน Widget Test (`test/widget_test.dart`) ที่ส่ง `FakeItemRepository` เข้าไปแทน API จริง เพื่อทดสอบว่า `HomePage` แสดงสินค้าและเพิ่มลงตะกร้าได้ และแสดงข้อความ error เมื่อ Repository โยน Exception — ผ่านทั้ง 2 เทสต์ (`flutter test`)
 
 ---
 
